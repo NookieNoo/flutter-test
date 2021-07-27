@@ -27,31 +27,51 @@ class BodyListView extends StatelessWidget {
 }
 
 Widget _myListView() {
-  return ListView(
-    padding: EdgeInsets.all(8.0),
-    // shrinkWrap: true,
-    // scrollDirection: Axis.horizontal,
-    // itemExtent: 300,
-    // reverse: true,
-    children: <Widget>[
-      ListTile(
-        title: Text('Sun'),
-        subtitle: Text('Today Clear'),
-        leading: Icon(Icons.wb_sunny),
-        trailing: Icon(Icons.keyboard_arrow_right),
-      ),
-      ListTile(
-        title: Text('Clowdy'),
-        subtitle: Text('Today Clowdy'),
-        leading: Icon(Icons.wb_cloudy),
-        trailing: Icon(Icons.keyboard_arrow_right),
-      ),
-      ListTile(
-        title: Text('Snow'),
-        subtitle: Text('Today Snow'),
-        leading: Icon(Icons.ac_unit),
-        trailing: Icon(Icons.keyboard_arrow_right),
-      ),
-    ],
+  final List<ListItem> items = List<ListItem>.generate(
+      10000,
+      (index) => index % 6 == 0
+          ? HeadingItem('Heading $index')
+          : MessageItem('Sender $index', 'Message body $index'));
+
+  return ListView.builder(
+    itemCount: items.length,
+    itemBuilder: (context, index) {
+      final item = items[index];
+      if (item is HeadingItem) {
+        return ListTile(
+          title:
+              Text(item.heading, style: Theme.of(context).textTheme.headline5),
+        );
+      } else if (item is MessageItem) {
+        return ListTile(
+          title: Text(item.sender),
+          subtitle: Text(item.body),
+          leading: Icon(Icons.insert_photo, color: Colors.red),
+          trailing: Icon(Icons.keyboard_arrow_right),
+        );
+      }
+      return ListView();
+      // return Card(
+      //   child: ListTile(
+      //     title: Text('${items[index]}'),
+      //     leading: Icon(Icons.insert_photo, color: Colors.red),
+      //     trailing: Icon(Icons.keyboard_arrow_right),
+      //   ),
+      // );
+    },
   );
+}
+
+abstract class ListItem {}
+
+class HeadingItem implements ListItem {
+  final String heading;
+  HeadingItem(this.heading);
+}
+
+class MessageItem implements ListItem {
+  final String sender;
+  final String body;
+
+  MessageItem(this.sender, this.body);
 }
