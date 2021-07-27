@@ -1,21 +1,10 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(
-    MaterialApp(
-      home: FirstHome(),
-      onGenerateRoute: (settings) {
-        switch (settings.name) {
-          case '/':
-            return MaterialPageRoute(builder: (context) => FirstHome());
-          case '/second':
-            User user = settings.arguments as User;
-            return MaterialPageRoute(builder: (context) => SecondHome(user));
-          default:
-        }
-      },
-    ),
-  );
+  runApp(MaterialApp(home: FirstHome(), routes: {
+    '/first': (context) => FirstHome(),
+    '/second': (context) => SecondHome(),
+  }));
 }
 
 class FirstHome extends StatelessWidget {
@@ -29,7 +18,7 @@ class FirstHome extends StatelessWidget {
       body: Center(
         child: ElevatedButton(
           onPressed: () {
-            User user = User('Ilya', 21);
+            User user = User('Ilya', 20);
             Navigator.pushNamed(context, '/second', arguments: user);
           },
           child: Text('Second Home'),
@@ -55,12 +44,12 @@ class HomePage extends StatelessWidget {
 }
 
 class SecondHome extends StatelessWidget {
-  final User user;
-
-  SecondHome(this.user);
+  late User user;
 
   @override
   Widget build(BuildContext context) {
+    RouteSettings settings = ModalRoute.of(context)!.settings;
+    user = settings.arguments as User;
     return Scaffold(
       appBar: AppBar(
         title: Text('${this.user.name} - ${this.user.age}'),
