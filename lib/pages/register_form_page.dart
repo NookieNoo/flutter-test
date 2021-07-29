@@ -12,6 +12,7 @@ class _RegisterFormPageState extends State<RegisterFormPage> {
   bool _hidePass = true;
 
   final _formKey = GlobalKey<FormState>();
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -19,6 +20,13 @@ class _RegisterFormPageState extends State<RegisterFormPage> {
   final _storyController = TextEditingController();
   final _passController = TextEditingController();
   final _confirmPassController = TextEditingController();
+
+  List<String> _countries = ['Russia', 'Ukraine', 'Germany', 'France'];
+  String? _selectedCountry;
+
+  final _nameFocus = FocusNode();
+  final _phoneFocus = FocusNode();
+  final _passFocus = FocusNode();
 
   @override
   void dispose() {
@@ -28,12 +36,23 @@ class _RegisterFormPageState extends State<RegisterFormPage> {
     _storyController.dispose();
     _passController.dispose();
     _confirmPassController.dispose();
+    _nameFocus.dispose();
+    _phoneFocus.dispose();
+    _passFocus.dispose();
+
     super.dispose();
+  }
+
+  void _fieldFocusChange(
+      BuildContext context, FocusNode currentFocus, FocusNode nextFocus) {
+    currentFocus.unfocus();
+    FocusScope.of(context).requestFocus(nextFocus);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: Text('Register Form'),
         centerTitle: true,
@@ -44,14 +63,24 @@ class _RegisterFormPageState extends State<RegisterFormPage> {
           padding: EdgeInsets.all(16),
           children: [
             TextFormField(
+              focusNode: _nameFocus,
+              autofocus: true,
+              onFieldSubmitted: (_) {
+                _fieldFocusChange(context, _nameFocus, _phoneFocus);
+              },
               controller: _nameController,
               decoration: InputDecoration(
                 labelText: 'Full Name *',
                 hintText: 'What do people call you?',
                 prefixIcon: Icon(Icons.person),
-                suffixIcon: Icon(
-                  Icons.delete_outline,
-                  color: Colors.red,
+                suffixIcon: GestureDetector(
+                  onTap: () {
+                    _nameController.clear();
+                  },
+                  child: Icon(
+                    Icons.delete_outline,
+                    color: Colors.red,
+                  ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.all(
@@ -73,15 +102,25 @@ class _RegisterFormPageState extends State<RegisterFormPage> {
               height: 10,
             ),
             TextFormField(
+              focusNode: _phoneFocus,
+              autofocus: true,
+              onFieldSubmitted: (_) {
+                _fieldFocusChange(context, _phoneFocus, _passFocus);
+              },
               controller: _phoneController,
               decoration: InputDecoration(
                 labelText: 'Phone Number *',
                 hintText: 'Where can we reach you?',
                 helperText: 'Phone format: (XXX)XXX-XXXX',
                 prefixIcon: Icon(Icons.call),
-                suffixIcon: Icon(
-                  Icons.delete_outline,
-                  color: Colors.red,
+                suffixIcon: GestureDetector(
+                  onLongPress: () {
+                    _phoneController.clear();
+                  },
+                  child: Icon(
+                    Icons.delete_outline,
+                    color: Colors.red,
+                  ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.all(
@@ -121,9 +160,28 @@ class _RegisterFormPageState extends State<RegisterFormPage> {
               keyboardType: TextInputType.emailAddress,
               validator: _validateEmail,
             ),
-            SizedBox(
-              height: 10,
+            SizedBox(height: 10),
+            DropdownButtonFormField(
+              items: _countries.map((country) {
+                return DropdownMenuItem(child: Text(country), value: country);
+              }).toList(),
+              onChanged: (data) {
+                print(data is String);
+                setState(() {
+                  _selectedCountry = data.toString();
+                });
+              },
+              value: _selectedCountry,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                icon: Icon(Icons.map),
+                labelText: 'Country?',
+              ),
+              // validator: (val) {
+              //   return val == null ? 'Please select a country' : null;
+              // },
             ),
+            SizedBox(height: 20),
             TextFormField(
               controller: _storyController,
               decoration: InputDecoration(
@@ -141,6 +199,7 @@ class _RegisterFormPageState extends State<RegisterFormPage> {
               height: 10,
             ),
             TextFormField(
+              focusNode: _passFocus,
               controller: _passController,
               obscureText: _hidePass,
               maxLength: 8,
@@ -202,13 +261,14 @@ class _RegisterFormPageState extends State<RegisterFormPage> {
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      print('form is valid');
+      _showDialog(_nameController.text);
       print('Name: ${_nameController.text}');
       print('Phone: ${_phoneController.text}');
       print('Email: ${_emailController.text}');
+      print('Country: ${_selectedCountry}');
       print('Story: ${_storyController.text}');
     } else {
-      print('Form is not valid! Please review and correct');
+      _showMessage('Form is not valid! Please review and correct');
     }
   }
 
@@ -244,5 +304,62 @@ class _RegisterFormPageState extends State<RegisterFormPage> {
       return 'Password does not match';
     }
     return null;
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+          ),
+        ),
+        backgroundColor: Colors.red,
+        duration: Duration(seconds: 5),
+        action: SnackBarAction(
+          label: 'Action',
+          onPressed: () {},
+        ),
+      ),
+    );
+  }
+
+  void _showDialog(String name) {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text(
+              'Registration successful',
+              style: TextStyle(
+                color: Colors.green,
+              ),
+            ),
+            content: Text(
+              '$name is now a vefified register form',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text(
+                  'Verified',
+                  style: TextStyle(
+                    color: Colors.green,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+            ],
+          );
+        });
   }
 }
