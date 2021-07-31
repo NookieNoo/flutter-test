@@ -1,39 +1,55 @@
 import 'dart:convert';
-// import 'package:json_serializable/json_serializable.dart';
+import 'package:json_annotation/json_annotation.dart';
 import 'package:http/http.dart' as http;
 
-// part 'offices.g.dart';
+part 'offices.g.dart';
 
+@JsonSerializable()
 class OfficesList {
   List<Office>? offices;
   OfficesList({this.offices});
 
-  factory OfficesList.fromJson(Map<String, dynamic> json) {
-    var officesJson = json['offices'] as List;
-    List<Office> officesList =
-        officesJson.map((e) => Office.fromJson(e)).toList();
+  factory OfficesList.fromJson(Map<String, dynamic> json) =>
+      _$OfficesListFromJson(json);
 
-    return OfficesList(
-      offices: officesList,
-    );
-  }
+  Map<String, dynamic> toJson() => _$OfficesListToJson(this);
+
+  // Ручная десериализация
+  // factory OfficesList.fromJson(Map<String, dynamic> json) {
+  //   var officesJson = json['offices'] as List;
+  //   List<Office> officesList =
+  //       officesJson.map((e) => Office.fromJson(e)).toList();
+
+  //   return OfficesList(
+  //     offices: officesList,
+  //   );
+  // }
 }
 
+// flutter packages pub run build_runner build - запуск генератора
+
+@JsonSerializable()
 class Office {
+  // @JsonKey(name: 'dt') //dt
+  // DateTime dateTime;
   final String? name;
   final String? address;
   final String? image;
 
   Office({this.name, this.address, this.image});
 
-  // json -> Object
-  factory Office.fromJson(Map<String, dynamic> json) {
-    return Office(
-      name: json['name'] as String,
-      address: json['address'] as String,
-      image: json['image'] as String,
-    );
-  }
+  factory Office.fromJson(Map<String, dynamic> json) => _$OfficeFromJson(json);
+
+  Map<String, dynamic> toJson() => _$OfficeToJson(this);
+
+  // json -> Object Ручная десериализация
+  // factory Office.fromJson(Map<String, dynamic> json) {
+  //   return Office(
+  //     name: json['name'] as String,
+  //     address: json['address'] as String,
+  //     image: json['image'] as String,
+  //   );
+  // }
 }
 
 Future<OfficesList> getOfficesList() async {
