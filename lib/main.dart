@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/offices.dart';
-import 'package:http/http.dart' as http;
 
 void main() => runApp(MyApp());
 
@@ -8,75 +6,115 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Networking',
-      home: MyHomePage(),
-    );
+        title: 'Inherited Demo',
+        home: MyHomePage(),
+        theme: ThemeData(primarySwatch: Colors.blue));
   }
 }
 
 class MyHomePage extends StatefulWidget {
+  final String? title;
+  MyHomePage({Key? key, this.title}) : super(key: key);
+
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  Future<OfficesList>? officesList;
+  int _counter = 0;
 
-  @override
-  void initState() {
-    // init state как useEffect[]
-    super.initState();
-    officesList = getOfficesList();
-  }
+  int get counterValue => _counter;
+
+  void _incrementCounter() => setState(() => _counter++);
+  void _decrementCounter() => setState(() => _counter--);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Networking'),
+        title: Text('Inherited Widget'),
         centerTitle: true,
       ),
-      body: FutureBuilder<OfficesList>(
-        future: officesList,
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            return ListView.builder(
-              itemBuilder: (context, index) {
-                return Card(
-                  child: ListTile(
-                    title: Text('${snapshot.data?.offices?[index].name}'),
-                    subtitle: Text('${snapshot.data?.offices?[index].address}'),
-                    leading: Image.network(
-                        '${snapshot.data?.offices?[index].image}'),
-                    isThreeLine: true,
-                  ),
-                );
-              },
-              itemCount: snapshot.data?.offices?.length,
-            );
-          } else if (snapshot.hasError) {
-            return Text('Error');
-          }
-          return Center(child: CircularProgressIndicator());
-        },
+      body: ListView(
+        children: <Widget>[
+          MyInheritedWidget(child: AppRootWidget(), myState: this),
+        ],
       ),
     );
   }
 }
 
-Future<http.Response> getData() async {
-  var url = Uri.parse('https://about.google/static/data/locations.json');
-  return await http.get(url);
+class AppRootWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final rootWidgetState = MyInheritedWidget.of(context)?.myState;
+
+    return Card(
+      elevation: 4.0,
+      child: Column(
+        children: <Widget>[
+          Text('(Root Widget)', style: Theme.of(context).textTheme.headline4),
+          Text('${rootWidgetState?.counterValue}',
+              style: Theme.of(context).textTheme.headline4),
+          SizedBox(height: 50),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              Counter(),
+              Counter(),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-void loadData() {
-  getData().then((response) {
-    if (response.statusCode == 200) {
-      print(response.body);
-    } else {
-      print(response.statusCode);
-    }
-  }).catchError((error) {
-    debugPrint(error.toString());
-  });
+class Counter extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final rootWidgetState = MyInheritedWidget.of(context)?.myState;
+
+    return Card(
+      margin: EdgeInsets.all(4.0).copyWith(bottom: 32.0),
+      color: Colors.yellowAccent,
+      child: Column(
+        children: <Widget>[
+          Text('(Child Widget)'),
+          Text('${rootWidgetState?.counterValue}',
+              style: Theme.of(context).textTheme.headline4),
+          ButtonBar(
+            children: <Widget>[
+              IconButton(
+                icon: Icon(Icons.remove),
+                color: Colors.red,
+                onPressed: () => rootWidgetState?._decrementCounter(),
+              ),
+              IconButton(
+                icon: Icon(Icons.add),
+                color: Colors.green,
+                onPressed: () => rootWidgetState?._incrementCounter(),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class MyInheritedWidget extends InheritedWidget {
+  final _MyHomePageState myState;
+
+  MyInheritedWidget({Key? key, required Widget child, required this.myState})
+      : super(key: key, child: child);
+
+  @override
+  bool updateShouldNotify(MyInheritedWidget oldWidget) {
+    return this.myState.counterValue != oldWidget.myState.counterValue;
+  }
+
+  static MyInheritedWidget? of(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType();
+  }
 }
