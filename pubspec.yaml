@@ -30,6 +30,7 @@ dependencies:
   cupertino_icons: ^1.0.2
   http: ^0.13.3
   scoped_model: ^2.0.0-nullsafety.0
+  provider: ^5.0.0
 
 dev_dependencies:
   flutter_test:
@@ -52,6 +53,7 @@ flutter:
   assets:
     - assets/images/bg.jpg
     - assets/icons/icon.png
+    - assets/users.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
