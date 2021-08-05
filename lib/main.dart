@@ -1,10 +1,7 @@
-import 'dart:convert';
-
+import 'dart:io';
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-
-import 'package:provider/provider.dart';
-import 'dart:math' as math;
+import 'package:path_provider/path_provider.dart';
 
 void main() => runApp(MyApp());
 
@@ -13,77 +10,109 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Inherited Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: ChangeNotifierProvider<ColorProvider>(
-        child: MyColorPage(),
-        create: (context) => ColorProvider(),
-      ),
+      title: 'Local file read/write Demo',
+      home: ReadWriteFileExample(),
     );
   }
 }
 
-class MyColorPage extends StatelessWidget {
+class ReadWriteFileExample extends StatefulWidget {
+  @override
+  _ReadWriteFileExampleState createState() => _ReadWriteFileExampleState();
+}
+
+class _ReadWriteFileExampleState extends State<ReadWriteFileExample> {
+  final TextEditingController _textController = TextEditingController();
+
+  static const String kLocalFileName = 'demo_localfile.txt';
+  String _localFileContent = '';
+  String _localFilePath = kLocalFileName;
+
+  @override
+  void initState() {
+    super.initState();
+    this._readTextFromLocalFile();
+    this
+        ._getLocalFile
+        .then((file) => setState(() => this._localFilePath = file.path));
+  }
+
   @override
   Widget build(BuildContext context) {
-    ColorProvider _state = Provider.of<ColorProvider>(context);
-
+    FocusNode textFieldFocusNode = FocusNode();
     return Scaffold(
       appBar: AppBar(
-        title: Consumer<ColorProvider>(builder: (context, value, child) {
-          return Text(
-            'Test Provider',
-            style: TextStyle(color: value.titleColor),
-          );
-        }),
+        title: Text('Local file read/write Demo'),
+        centerTitle: true,
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text('ChangeNotifierProvider Example',
-                style: TextStyle(fontSize: 20)),
-            SizedBox(height: 50),
-            AnimatedContainer(
-              duration: Duration(seconds: 1),
-              color: _state.blockColor,
-              width: 150,
-              height: 150,
-            ),
-            Consumer<ColorProvider>(builder: (context, value, child) {
-              return Switch(
-                value: value.isSwitchedValue,
-                onChanged: value._changeColors,
-                activeTrackColor: Colors.lightGreenAccent,
-                activeColor: Colors.green,
-              );
-            }),
-          ],
-        ),
+      body: ListView(
+        padding: EdgeInsets.all(20.0),
+        children: <Widget>[
+          Text('Write to local file:', style: TextStyle(fontSize: 20)),
+          TextField(
+              focusNode: textFieldFocusNode,
+              controller: _textController,
+              maxLines: null,
+              style: TextStyle(fontSize: 20)),
+          ButtonBar(
+            children: <Widget>[
+              MaterialButton(
+                child: Text('Load', style: TextStyle(fontSize: 20)),
+                onPressed: () async {
+                  this._readTextFromLocalFile();
+                  this._textController.text = this._localFileContent;
+                  FocusScope.of(context).requestFocus(textFieldFocusNode);
+                  developer.log('String successfully loaded from local file');
+                },
+              ),
+              MaterialButton(
+                child: Text('Save', style: TextStyle(fontSize: 20)),
+                onPressed: () async {
+                  await this._writeTextToLocalFile(this._textController.text);
+                  this._textController.clear();
+                  await this._readTextFromLocalFile();
+                  developer.log('String successfully saved to local file');
+                },
+              ),
+            ],
+          ),
+          Divider(height: 20.0),
+          Text('Local file path:', style: Theme.of(context).textTheme.title),
+          Text(this._localFilePath, style: Theme.of(context).textTheme.subhead),
+          Divider(height: 20.0),
+          Text('Local file content:', style: Theme.of(context).textTheme.title),
+          Text(this._localFileContent,
+              style: Theme.of(context).textTheme.subhead),
+        ],
       ),
     );
   }
-}
 
-// CountProvider (ChangeNotifier)
-class ColorProvider extends ChangeNotifier {
-  Color _titleColor =
-      Colors.primaries[math.Random().nextInt(Colors.primaries.length)];
-  Color _blockColor =
-      Colors.primaries[math.Random().nextInt(Colors.primaries.length)];
-  bool _isSwitched = false;
-  Color get titleColor => _titleColor;
-  Color get blockColor => _blockColor;
-  bool get isSwitchedValue => _isSwitched;
+  Future<String> get _getLocalPath async {
+    final directory = await getApplicationDocumentsDirectory();
+    return directory.path;
+  }
 
-  void _changeColors(bool isSwitched) {
-    _titleColor =
-        Colors.primaries[math.Random().nextInt(Colors.primaries.length)];
-    _blockColor =
-        Colors.primaries[math.Random().nextInt(Colors.primaries.length)];
-    _isSwitched = isSwitched;
-    notifyListeners();
+  Future<File> get _getLocalFile async {
+    final path = await _getLocalPath;
+    return File('$path/$kLocalFileName');
+  }
+
+  Future<File> _writeTextToLocalFile(String text) async {
+    final file = await _getLocalFile;
+    return file.writeAsString(text);
+  }
+
+  Future _readTextFromLocalFile() async {
+    String content;
+    try {
+      final file = await _getLocalFile;
+      content = await file.readAsString();
+    } catch (e) {
+      content = 'Error loading local file: $e';
+    }
+    setState(() {
+      this._localFileContent = content;
+    });
   }
 }
