@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/bloc/user_bloc.dart';
+import 'package:flutter_application_1/cubit/user_cubit.dart';
 import 'package:flutter_application_1/services/users_repository.dart';
 import 'package:flutter_application_1/widgets/action_buttons.dart';
 import 'package:flutter_application_1/widgets/user_list.dart';
@@ -11,8 +12,8 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<UserBloc>(
-      create: (context) => UserBloc(usersRepository),
+    return BlocProvider<UserCubit>(
+      create: (context) => UserCubit(usersRepository),
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
